@@ -1,20 +1,21 @@
 import gc
+import pickle
 
 import numpy as np
 import pandas as pd
 import pyarrow.parquet as pq
 
+from argparse import ArgumentParser
+
 from tsfresh.feature_extraction import extract_features
-
 from tqdm import tqdm
-
-from core.utils import min_max_transf
 
 
 def fresh_features(path="../input/train.parquet",
                    offset=0,
                    ncols=1452,
                    n_dims=160,
+                   n_jobs=2,
                    fc_parameters={}):
     nrows = 800000 * ncols
     pq_mat = np.zeros((nrows, 3))
@@ -49,7 +50,7 @@ def fresh_features(path="../input/train.parquet",
     n_feats = 0
     for v in fc_parameters.values():
         if isinstance(v, list):
-            n_feats += len(n_feats)
+            n_feats += len(v)
         else:
             n_feats += 1
     feat_mat = np.zeros((ncols, n_dims, 3 * n_feats))
@@ -60,7 +61,7 @@ def fresh_features(path="../input/train.parquet",
             column_id="dummy",
             column_kind="group",
             column_value=f"phase{i}",
-            n_jobs=2)
+            n_jobs=n_jobs)
         for j in range(ncols):
             feats_per_cols = feats.filter(
                 regex=f"^{float(j)}__").values.reshape((-1, n_dims, n_feats))
@@ -84,3 +85,52 @@ class Transformer:
         self.logger = logger
 
         self.bucket_size = int(sample_size / n_dim)
+
+
+if __name__ == "__main__":
+    parser = ArgumentParser()
+    parser.add_argument("--path", default="../input/train.parquet")
+    parser.add_argument("--name", default="../input/train_feats.pkl")
+    args = parser.parse_args()
+    feats_list = []
+    for i in range(24):
+        feats = fresh_features(
+            path=args.path,
+            ncols=121,
+            offset=i * 121,
+            n_jobs=8,
+            fc_parameters={
+                "fft_coefficient": [
+                    {"coeff": 0, "attr": "abs"},
+                    {"coeff": 1, "attr": "abs"},
+                    {"coeff": 2, "attr": "abs"}
+                ],
+                'longest_strike_above_mean': None,
+                'longest_strike_below_mean': None,
+                'mean_change': None,
+                'mean_abs_change': None,
+                'mean': None,
+                'maximum': None,
+                'minimum': None,
+                'absolute_sum_of_changes': None,
+                'autocorrelation': [{'lag': 3}],
+                'binned_entropy': [{'max_bins': 10}],
+                'cid_ce': [{'normalize': True}],
+                'count_above_mean': None,
+                'first_location_of_maximum': None,
+                'first_location_of_minimum': None,
+                'last_location_of_maximum': None,
+                'last_location_of_minimum': None,
+                'mean_second_derivative_central': None,
+                'median': None,
+                'ratio_beyond_r_sigma': [{'r': 2}],
+                'time_reversal_asymmetry_statistic': [{'lag': 4}],
+                "abs_energy": None,
+                "kurtosis": None,
+                "skewness": None,
+                "standard_deviation": None,
+                "sum_values": None
+            })
+        feats_list.append(feats)
+    with open(args.name, "wb") as f:
+        pickle.dump(feats_list, f)
