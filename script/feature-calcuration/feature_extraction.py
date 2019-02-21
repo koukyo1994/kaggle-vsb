@@ -69,6 +69,18 @@ def fresh_features(path="../input/train.parquet",
     return feat_mat
 
 
+def min_max_transf(ts, min_data, max_data, range_needed=(-1, 1)):
+    if min_data < 0:
+        ts_std = (ts + abs(min_data)) / (max_data + abs(min_data))
+    else:
+        ts_std = (ts - min_data) / (max_data + abs(min_data))
+    if range_needed[0] < 0:
+        return ts_std * (
+            range_needed[1] + abs(range_needed[0])) + range_needed[0]
+    else:
+        return ts_std * (range_needed[1] - range_needed[0]) + range_needed[0]
+
+
 class Transformer:
     def __init__(self,
                  logger,
@@ -100,36 +112,71 @@ if __name__ == "__main__":
             offset=i * 121,
             n_jobs=8,
             fc_parameters={
-                "fft_coefficient": [
-                    {"coeff": 0, "attr": "abs"},
-                    {"coeff": 1, "attr": "abs"},
-                    {"coeff": 2, "attr": "abs"}
-                ],
-                'longest_strike_above_mean': None,
-                'longest_strike_below_mean': None,
-                'mean_change': None,
-                'mean_abs_change': None,
-                'mean': None,
-                'maximum': None,
-                'minimum': None,
-                'absolute_sum_of_changes': None,
-                'autocorrelation': [{'lag': 3}],
-                'binned_entropy': [{'max_bins': 10}],
-                'cid_ce': [{'normalize': True}],
-                'count_above_mean': None,
-                'first_location_of_maximum': None,
-                'first_location_of_minimum': None,
-                'last_location_of_maximum': None,
-                'last_location_of_minimum': None,
-                'mean_second_derivative_central': None,
-                'median': None,
-                'ratio_beyond_r_sigma': [{'r': 2}],
-                'time_reversal_asymmetry_statistic': [{'lag': 4}],
-                "abs_energy": None,
-                "kurtosis": None,
-                "skewness": None,
-                "standard_deviation": None,
-                "sum_values": None
+                "fft_coefficient": [{
+                    "coeff": 0,
+                    "attr": "abs"
+                }, {
+                    "coeff": 1,
+                    "attr": "abs"
+                }, {
+                    "coeff": 2,
+                    "attr": "abs"
+                }],
+                'longest_strike_above_mean':
+                None,
+                'longest_strike_below_mean':
+                None,
+                'mean_change':
+                None,
+                'mean_abs_change':
+                None,
+                'mean':
+                None,
+                'maximum':
+                None,
+                'minimum':
+                None,
+                'absolute_sum_of_changes':
+                None,
+                'autocorrelation': [{
+                    'lag': 3
+                }],
+                'binned_entropy': [{
+                    'max_bins': 10
+                }],
+                'cid_ce': [{
+                    'normalize': True
+                }],
+                'count_above_mean':
+                None,
+                'first_location_of_maximum':
+                None,
+                'first_location_of_minimum':
+                None,
+                'last_location_of_maximum':
+                None,
+                'last_location_of_minimum':
+                None,
+                'mean_second_derivative_central':
+                None,
+                'median':
+                None,
+                'ratio_beyond_r_sigma': [{
+                    'r': 2
+                }],
+                'time_reversal_asymmetry_statistic': [{
+                    'lag': 4
+                }],
+                "abs_energy":
+                None,
+                "kurtosis":
+                None,
+                "skewness":
+                None,
+                "standard_deviation":
+                None,
+                "sum_values":
+                None
             })
         feats_list.append(feats)
     with open(args.name, "wb") as f:
