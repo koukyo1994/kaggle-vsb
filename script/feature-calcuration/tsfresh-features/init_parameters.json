@@ -1,0 +1,61 @@
+{
+    "fft_coefficient": [
+        {
+            "coeff": 0,
+            "attr": "abs"
+        },
+        {
+            "coeff": 1,
+            "attr": "abs"
+        },
+        {
+            "coeff": 2,
+            "attr": "abs"
+        }
+    ],
+    "longest_strike_above_mean": "None",
+    "longest_strike_below_mean": "None",
+    "mean_change": "None",
+    "mean_abs_change": "None",
+    "mean": "None",
+    "maximum": "None",
+    "minimum": "None",
+    "absolute_sum_of_changes": "None",
+    "autocorrelation": [
+        {
+            "lag": 3
+        }
+    ],
+    "binned_entropy": [
+        {
+            "max_bins": 10
+        }
+    ],
+    "cid_ce": [
+        {
+            "normalize": "True"
+        }
+    ],
+    "count_above_mean": "None",
+    "first_location_of_maximum": "None",
+    "first_location_of_minimum": "None",
+    "last_location_of_maximum": "None",
+    "last_location_of_minimum": "None",
+    "mean_second_derivative_central": "None",
+    "median": "None",
+    "ratio_beyond_r_sigma": [
+        {
+            "r": 2
+        }
+    ],
+    "time_reversal_asymmetry_statistic": [
+        {
+            "lag": 4
+        }
+    ],
+    "abs_energy": "None",
+    "kurtosis": "None",
+    "skewness": "None",
+    "standard_deviation": "None",
+    "sum_values": "None"
+}

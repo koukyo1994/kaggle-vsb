@@ -7,4 +7,4 @@ train: ${FEATURES}
 	python train.py --input ${FEATURES}
 
 ${FEATURES}: ${TRAIN} ${META_TRAIN}
-	python core/feature_extraction.py --path ${TRAIN} --name ${FEAT_DIR}
+	make -C ../feature-calcuration DATA=${TRAIN} METADATA=${META_TRAIN} FEATURES=${FEATURES}

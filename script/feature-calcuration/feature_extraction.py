@@ -1,11 +1,8 @@
 import gc
-import pickle
 
 import numpy as np
 import pandas as pd
 import pyarrow.parquet as pq
-
-from argparse import ArgumentParser
 
 from tsfresh.feature_extraction import extract_features
 from tqdm import tqdm
@@ -97,101 +94,3 @@ class Transformer:
         self.logger = logger
 
         self.bucket_size = int(sample_size / n_dim)
-
-
-if __name__ == "__main__":
-    parser = ArgumentParser()
-    parser.add_argument("--metadata")
-    parser.add_argument("--path", default="../input/train.parquet")
-    parser.add_argument("--name", default="../input/train_feats.pkl")
-    parser.add_argument("--nchunk", default=24, type=int)
-    args = parser.parse_args()
-    feats_list = []
-
-    meta = pd.read_csv(args.metadata)
-    n_line = int(meta.shape[0] // 3)
-    if n_line % args.nchunk == 0:
-        nchunk = args.nchunk
-    else:
-        nchunk = args.nchunk + 1
-    step = n_line // args.nchunk
-    current_head = meta.signal_id[0] 
-    for i in range(nchunk):
-        if i == nchunk - 1:
-            step = n_line % args.nchunk
-        feats = fresh_features(
-            path=args.path,
-            ncols=step,
-            offset=current_head,
-            n_jobs=8,
-            fc_parameters={
-                "fft_coefficient": [{
-                    "coeff": 0,
-                    "attr": "abs"
-                }, {
-                    "coeff": 1,
-                    "attr": "abs"
-                }, {
-                    "coeff": 2,
-                    "attr": "abs"
-                }],
-                'longest_strike_above_mean':
-                None,
-                'longest_strike_below_mean':
-                None,
-                'mean_change':
-                None,
-                'mean_abs_change':
-                None,
-                'mean':
-                None,
-                'maximum':
-                None,
-                'minimum':
-                None,
-                'absolute_sum_of_changes':
-                None,
-                'autocorrelation': [{
-                    'lag': 3
-                }],
-                'binned_entropy': [{
-                    'max_bins': 10
-                }],
-                'cid_ce': [{
-                    'normalize': True
-                }],
-                'count_above_mean':
-                None,
-                'first_location_of_maximum':
-                None,
-                'first_location_of_minimum':
-                None,
-                'last_location_of_maximum':
-                None,
-                'last_location_of_minimum':
-                None,
-                'mean_second_derivative_central':
-                None,
-                'median':
-                None,
-                'ratio_beyond_r_sigma': [{
-                    'r': 2
-                }],
-                'time_reversal_asymmetry_statistic': [{
-                    'lag': 4
-                }],
-                "abs_energy":
-                None,
-                "kurtosis":
-                None,
-                "skewness":
-                None,
-                "standard_deviation":
-                None,
-                "sum_values":
-                None
-            })
-        feats_list.append(feats)
-        current_head += i * step
-    with open(args.name, "wb") as f:
-        pickle.dump(feats_list, f)
