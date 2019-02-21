@@ -89,15 +89,28 @@ class Transformer:
 
 if __name__ == "__main__":
     parser = ArgumentParser()
+    parser.add_argument("--metadata")
     parser.add_argument("--path", default="../input/train.parquet")
     parser.add_argument("--name", default="../input/train_feats.pkl")
+    parser.add_argument("--nchunk", default=24, type=int)
     args = parser.parse_args()
     feats_list = []
-    for i in range(24):
+
+    meta = pd.read_csv(args.metadata)
+    n_line = int(meta.shape[0] // 3)
+    if n_line % args.nchunk == 0:
+        nchunk = args.nchunk
+    else:
+        nchunk = args.nchunk + 1
+    step = n_line // args.nchunk
+    current_head = meta.signal_id[0] 
+    for i in range(nchunk):
+        if i == nchunk - 1:
+            step = n_line % args.nchunk
         feats = fresh_features(
             path=args.path,
-            ncols=121,
-            offset=i * 121,
+            ncols=step,
+            offset=current_head,
             n_jobs=8,
             fc_parameters={
                 "fft_coefficient": [
@@ -132,5 +145,6 @@ if __name__ == "__main__":
                 "sum_values": None
             })
         feats_list.append(feats)
+        current_head += i * step
     with open(args.name, "wb") as f:
         pickle.dump(feats_list, f)
