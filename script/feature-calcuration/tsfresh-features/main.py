@@ -61,7 +61,7 @@ if __name__ == "__main__":
                 n_jobs=args.n_jobs,
                 fc_parameters=parameters)
         feats_list.append(feats)
-        current_head += (i + 1) * step
+        current_head += step
         logger.info(f"current head: {current_head}")
     with open(outdir / args.name, "wb") as f:
         pickle.dump(feats_list, f)
