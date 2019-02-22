@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 import pyarrow.parquet as pq
 
+from sklearn.preprocessing import StandardScaler
 from tsfresh.feature_extraction import extract_features
 from tqdm import tqdm
 
@@ -54,6 +55,7 @@ def fresh_features(path="../input/train.parquet",
             n_feats += 1
     feat_mat = np.zeros((ncols, n_dims, 3 * n_feats))
     for i in range(3):
+        ss = StandardScaler()
         feats = extract_features(
             parq,
             default_fc_parameters=fc_parameters,
@@ -61,6 +63,10 @@ def fresh_features(path="../input/train.parquet",
             column_kind="group",
             column_value=f"phase{i}",
             n_jobs=n_jobs)
+        columns = feats.columns
+        feats = ss.fit_transform(feats)
+        feats = pd.DataFrame(feats, columns=columns)
+
         for j in range(ncols):
             feats_per_cols = feats.filter(
                 regex=f"^{float(j)}__").values.reshape((-1, n_dims, n_feats))
