@@ -6,6 +6,10 @@ import numpy as np
 from sklearn.metrics import matthews_corrcoef
 
 
+def sigmoid(x):
+    return 1 / (1 + np.exp(-x))
+
+
 def threshold_search(y_true, y_proba):
     best_threshold = 0
     best_score = 0

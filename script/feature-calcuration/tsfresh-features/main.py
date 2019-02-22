@@ -8,10 +8,11 @@ from argparse import ArgumentParser
 from pathlib import Path
 
 if __name__ == "__main__":
+    sys.path.append("../..")
     sys.path.append("..")
     sys.path.append("./")
 
-    from common.utils import timer, get_logger, parse_dict
+    from script.common.utils import timer, get_logger, parse_dict
     from feature_extraction import fresh_features
 
     parser = ArgumentParser()
@@ -31,7 +32,7 @@ if __name__ == "__main__":
     parameters = parse_dict(parameters)
     filename = re.search(r"[a-zA-Z_]+.json$", args.parameters).group()
 
-    outdir = Path(f"../features/{filename}")
+    outdir = Path(f"../features/tsfresh-features/{filename}")
     outdir.mkdir(exist_ok=True)
 
     logger = get_logger(name="tsfresh", tag=f"tsfresh_features/{filename}")
