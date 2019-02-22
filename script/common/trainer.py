@@ -73,8 +73,8 @@ class Trainer:
                   "w") as f:
             json.dump(search_result, f)
 
-        self.logger.info(f"MCC: ", search_result["mcc"])
-        self.logger.info(f"threshold: ", search_result["threshold"])
+        self.logger.info(f"MCC: {search_result['mcc']}")
+        self.logger.info(f"threshold: {search_result['threshold']}")
 
     def score(self):
         self._score(self.local_test_set, self.y_local)
