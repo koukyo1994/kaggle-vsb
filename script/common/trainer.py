@@ -1,3 +1,7 @@
+import json
+
+from datetime import datetime as dt
+
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -62,6 +66,13 @@ class Trainer:
                 X_train, y_train, n_epochs, eval_set=(X_val, y_val))
             self.train_preds[val_index] = valid_preds
         search_result = threshold_search(self.y, self.train_preds)
+
+        path = Path("search_result")
+        path.mkdir(exist_ok=True)
+        with open(path / (dt.now().strftime("%Y-%-%d-%H-%M-%S") + ".json"),
+                  "w") as f:
+            json.dump(search_result, f)
+
         self.logger.info(f"MCC: ", search_result["mcc"])
         self.logger.info(f"threshold: ", search_result["threshold"])
 
@@ -156,7 +167,7 @@ class NNTrainer(Trainer):
                 best_score = val_mcc
         model.load_state_dict(torch.load(self.path / f"best{self.fold}.pt"))
         valid_preds, avg_val_loss = self._val(valid_loader, model)
-        self.logger.info(f"Validation loss: ", avg_val_loss)
+        self.logger.info(f"Validation loss: {avg_val_loss}")
         return valid_preds
 
     def _val(self, loader, model):
