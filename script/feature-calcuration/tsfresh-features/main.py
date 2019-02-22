@@ -5,6 +5,7 @@ import pickle
 import pandas as pd
 
 from argparse import ArgumentParser
+from pathlib import Path
 
 if __name__ == "__main__":
     sys.path.append("..")
@@ -16,7 +17,7 @@ if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument("--metadata")
     parser.add_argument("--path", default="../input/train.parquet")
-    parser.add_argument("--name", default="../input/train_feats.pkl")
+    parser.add_argument("--name", default="train_feats.pkl")
     parser.add_argument("--nchunk", default=24, type=int)
     parser.add_argument("--n_jobs", default=2, type=int)
     parser.add_argument(
@@ -29,6 +30,9 @@ if __name__ == "__main__":
 
     parameters = parse_dict(parameters)
     filename = re.search(r"[a-zA-Z_]+.json$", args.parameters).group()
+
+    outdir = Path(f"../features/{filename}")
+    outdir.mkdir(exist_ok=True)
 
     logger = get_logger(name="tsfresh", tag=f"tsfresh_features/{filename}")
     logger.info(f"path: {args.path}, name: {args.name}, nchunk: {args.nchunk}")
@@ -59,6 +63,6 @@ if __name__ == "__main__":
         feats_list.append(feats)
         current_head += (i + 1) * step
         logger.info(f"current head: {current_head}")
-    with open(args.name, "wb") as f:
+    with open(outdir / args.name, "wb") as f:
         pickle.dump(feats_list, f)
     logger.info(f"dumped {args.name}")
