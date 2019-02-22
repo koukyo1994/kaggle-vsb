@@ -8,12 +8,12 @@ FEATURES := ${FEAT_DIR}/${FEATNAME}
 HIDDEN := 128
 LINEAR := 100
 NATTEN := 50
-ANNEAL := False
+ANNEAL := --anneal
 TBATCH := 512
 VBATCH := 512
 NSPLITS := 5
 SEED := 42
-ENBL_TEST := False
+ENBL_TEST := --enable_local_test
 TEST_SIZE := 0.3
 DEVICE := "cpu"
 NEPOCHS := 50
@@ -25,12 +25,12 @@ train: ${FEATURES}
 	--hidden_size ${HIDDEN} \
 	--linear_size ${LINEAR} \
 	--n_attention ${NATTEN} \
-	--anneal ${ANNEAL} \
+	${ANNEAL} \
 	--train_batch ${TBATCH} \
 	--val_batch ${VBATCH} \
 	--n_splits ${NSPLITS} \
 	--seed ${SEED} \
-	--enable_local_test ${ENBL_TEST} \
+	${ENBL_TEST} \
 	--test_size ${TEST_SIZE} \
 	--device ${DEVICE} \
 	--n_epochs ${NEPOCHS}

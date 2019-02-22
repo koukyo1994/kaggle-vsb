@@ -19,14 +19,14 @@ if __name__ == "__main__":
     parser.add_argument("--hidden_size", default=128, type=int)
     parser.add_argument("--linear_size", default=100, type=int)
     parser.add_argument("--n_attention", default=50, type=int)
-    parser.add_argument("--anneal", default=False, type=bool)
+    parser.add_argument("--anneal", action="store_true")
 
     parser.add_argument("--train_batch", default=512, type=int)
     parser.add_argument("--val_batch", default=512, type=int)
 
     parser.add_argument("--n_splits", default=5, type=int)
     parser.add_argument("--seed", default=42, type=int)
-    parser.add_argument("--enable_local_test", default=False, type=bool)
+    parser.add_argument("--enable_local_test", action="store_true")
     parser.add_argument("--test_size", default=0.3, type=float)
 
     parser.add_argument("--device", default="cpu")
