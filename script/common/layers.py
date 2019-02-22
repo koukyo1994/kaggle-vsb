@@ -32,23 +32,3 @@ class Attention(nn.Module):
 
         weighted_input = torch.bmm(a, x)
         return torch.sum(weighted_input, 1)
-
-
-class LSTMGRUAttentionNet(nn.Module):
-    def __init__(self, hidden_size, linear_size, input_shape, n_attention):
-        super(LSTMGRUAttentionNet, self).__init__()
-
-        self.maxlen = input_shape[1]
-        self.input_dim = input_shape[2]
-        self.lstm = nn.LSTM(
-            self.input_dim, hidden_size, bidirectional=True, batch_first=True)
-        self.gru = nn.GRU(
-            hidden_size * 2,
-            int(hidden_size / 2),
-            bidirectional=True,
-            batch_first=True)
-        self.attn = Attention(
-            int(hidden_size / 2) * 2, self.maxlen, n_attention, n_attention)
-        self.lin1 = nn.Linear(int(hidden_size / 2) * 2, linear_size)
-        self.relu = nn.ReLU()
-        self.lin2 = nn.Linear(linear_size, 1)

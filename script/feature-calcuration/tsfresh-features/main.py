@@ -11,7 +11,7 @@ if __name__ == "__main__":
     sys.path.append("..")
     sys.path.append("./")
 
-    from utils.common import timer, get_logger, parse_dict
+    from common.utils import timer, get_logger, parse_dict
     from feature_extraction import fresh_features
 
     parser = ArgumentParser()
