@@ -7,8 +7,6 @@ from pathlib import Path
 
 from argparse import ArgumentParser
 
-from sklearn.preprocessing import StandardScaler
-
 if __name__ == "__main__":
     sys.path.append("../..")
     sys.path.append("..")
@@ -62,8 +60,6 @@ if __name__ == "__main__":
         feats = np.concatenate(feats)
         features.append(feats)
     train = np.concatenate(features, axis=2)
-    ss = StandardScaler()
-    train = ss.fit_transform(train)
 
     answer = pd.read_csv(args.metadata).query("phase == 0").target.values
 

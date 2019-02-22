@@ -29,6 +29,7 @@ def fresh_features(path="../input/train.parquet",
         path, columns=[str(offset),
                        str(offset + 1),
                        str(offset + 2)]).to_pandas().values
+    temp = min_max_transf(temp, -128, 127)
     pq_mat[0:800000, 0:3] = temp
 
     for i in tqdm(range(1, ncols)):
@@ -39,6 +40,7 @@ def fresh_features(path="../input/train.parquet",
                 str(offset + i + 1),
                 str(offset + i + 2)
             ]).to_pandas().values
+        temp = min_max_transf(temp, -128, 127)
         pq_mat[i * 800000:(i + 1) * 800000, 0:3] = temp
     del temp
     gc.collect()
