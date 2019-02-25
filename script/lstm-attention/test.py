@@ -17,7 +17,7 @@ if __name__ == "__main__":
     sys.path.append("./")
     from script.common.utils import get_logger
     from script.common.train_helpers import sigmoid
-    from model import LSTMGRUAttentionNet
+    from model import LSTMAttentionNet
 
     parser = ArgumentParser()
     parser.add_argument("--tag")
@@ -54,7 +54,7 @@ if __name__ == "__main__":
     bin_path = Path(f"bin/{args.tag}")
     test_preds = np.zeros(test.shape[0])
     for path in bin_path.iterdir():
-        model = LSTMGRUAttentionNet(**trainer.kwargs)
+        model = LSTMAttentionNet(**trainer.kwargs)
         model.to(args.device)
         model.load_state_dict(torch.load(path))
 

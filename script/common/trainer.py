@@ -1,5 +1,3 @@
-import json
-
 from datetime import datetime as dt
 
 import torch
@@ -32,6 +30,9 @@ class Trainer:
 
         self.fold = StratifiedKFold(
             n_splits=n_splits, shuffle=True, random_state=seed)
+        self.best_score = None
+        self.best_threshold = None
+        self.tag = dt.now().strftime("%Y-%m-%d-%H-%M-%S")
 
     def _split(self, train, answer):
         X_train, local_test, y_train, y_local_test = train_test_split(
@@ -67,12 +68,6 @@ class Trainer:
             self.train_preds[val_index] = valid_preds
         search_result = threshold_search(self.y, self.train_preds)
 
-        path = Path("search_result")
-        path.mkdir(exist_ok=True)
-        with open(path / (dt.now().strftime("%Y-%-%d-%H-%M-%S") + ".json"),
-                  "w") as f:
-            json.dump(search_result, f)
-
         self.logger.info(f"MCC: {search_result['mcc']}")
         self.logger.info(f"threshold: {search_result['threshold']}")
 
@@ -89,7 +84,7 @@ class NNTrainer(Trainer):
                  enable_local_test=False,
                  test_size=0.3,
                  device="cpu",
-                 train_batch=512,
+                 train_batch=128,
                  val_batch=512,
                  kwargs={},
                  anneal=True):
@@ -107,8 +102,8 @@ class NNTrainer(Trainer):
         self.anneal = anneal
         self.loss_fn = nn.BCEWithLogitsLoss(reduction="mean").to(self.device)
 
-        path = Path("bin")
-        path.mkdir(exist_ok=True)
+        path = Path(f"bin/{self.tag}")
+        path.mkdir(exist_ok=True, parents=True)
         self.path = path
 
     def _fit(self, X_train, y_train, n_epochs=50, eval_set=()):
@@ -211,3 +206,5 @@ class NNTrainer(Trainer):
         search_result = threshold_search(y, test_preds)
         self.logger.info(f"local test MCC: ", search_result["mcc"])
         self.logger.info(f"local test threshold: ", search_result["threshold"])
+        self.best_score = search_result["mcc"]
+        self.best_threshold = search_result["threshold"]

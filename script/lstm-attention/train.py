@@ -11,7 +11,7 @@ if __name__ == "__main__":
     sys.path.append("../..")
     sys.path.append("..")
     sys.path.append("./")
-    from model import LSTMGRUAttentionNet
+    from model import LSTMAttentionNet
     from script.common.trainer import NNTrainer
     from script.common.utils import get_logger
 
@@ -38,7 +38,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    logger = get_logger("lstm-gru-attention", "lstm-gru-attention")
+    logger = get_logger("lstm-attention", "lstm-attention")
     logger.info(
         f"hidden_size: {args.hidden_size}, linear_size: {args.linear_size}")
     logger.info(f"n_attention: {args.n_attention}, anneal: {args.anneal}")
@@ -65,7 +65,7 @@ if __name__ == "__main__":
     answer = pd.read_csv(args.metadata).query("phase == 0").target.values
 
     trainer = NNTrainer(
-        LSTMGRUAttentionNet,
+        LSTMAttentionNet,
         logger,
         n_splits=args.n_splits,
         seed=args.seed,

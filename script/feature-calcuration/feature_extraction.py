@@ -72,7 +72,7 @@ def fresh_features(path="../input/train.parquet",
     return feat_mat
 
 
-def min_max_transf(ts, min_data, max_data, range_needed=(-1, 1)):
+def _min_max_transf(ts, min_data, max_data, range_needed=(-1, 1)):
     if min_data < 0:
         ts_std = (ts + abs(min_data)) / (max_data + abs(min_data))
     else:
@@ -84,19 +84,38 @@ def min_max_transf(ts, min_data, max_data, range_needed=(-1, 1)):
         return ts_std * (range_needed[1] - range_needed[0]) + range_needed[0]
 
 
-class Transformer:
-    def __init__(self,
-                 logger,
-                 sample_size=800000,
-                 n_dim=160,
-                 min_max=(-1, 1),
-                 min_num=-128,
-                 max_num=127):
-        self.n_dim = n_dim
-        self.min_max = min_max
-        self.min_num = min_num
-        self.max_num = max_num
-        self.sample_size = sample_size
-        self.logger = logger
+def _transform_ts(ts, n_dim=160, min_max=(-1, 1)):
+    ts_std = _min_max_transf(ts, min_data=-128, max_data=127)
+    bucket_size = int(800000 / n_dim)
+    new_ts = []
+    for i in range(0, 800000, bucket_size):
+        ts_range = ts_std[i:i + bucket_size]
+        mean = ts_range.mean()
+        std = ts_range.std()
+        std_top = mean + std
+        std_bot = mean - std
+        percentil_calc = np.percentile(ts_range, [0, 1, 25, 50, 75, 99, 100])
+        max_range = percentil_calc[-1] - percentil_calc[0]
+        relative_percentile = percentil_calc - mean
+        new_ts.append(
+            np.concatenate([
+                np.asarray([mean, std, std_top, std_bot, max_range]),
+                percentil_calc, relative_percentile
+            ]))
+    return np.asarray(new_ts)
 
-        self.bucket_size = int(sample_size / n_dim)
+
+def prep_data(path="../input/train.parquet", offset=0, ncols=1452, n_dim=160):
+    praq_train = pq.read_pandas(
+        path,
+        columns=[str(i) for i in range(offset, offset + ncols)]).to_pandas()
+    X = []
+    for i in tqdm(range(offset, offset + ncols, 3)):
+        X_signal = []
+        for phase in [0, 1, 2]:
+            trns = _transform_ts(praq_train[str(i + phase)], n_dim=n_dim)
+            X_signal.append(trns)
+        X_signal = np.concatenate(X_signal, axis=1)
+        X.append(X_signal)
+    X = np.asarray(X)
+    return X
