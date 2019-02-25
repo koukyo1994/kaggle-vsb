@@ -88,5 +88,13 @@ if __name__ == "__main__":
 
     trainer_path = Path(f"trainer/{trainer.tag}")
     trainer_path.mkdir(parents=True, exist_ok=True)
+
+    trainer.fold = None
+    trainer.local_test_set = None
+    trainer.train_set = None
+    trainer.y = None
+    trainer.y_local = None
+    trainer.logger = None
+    trainer.model = None
     with open(trainer_path / "trainer.pkl", "wb") as f:
         pickle.dump(trainer, f)
