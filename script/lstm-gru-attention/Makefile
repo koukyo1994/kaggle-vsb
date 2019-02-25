@@ -36,4 +36,4 @@ train: ${FEATURES}
 	--n_epochs ${NEPOCHS}
 
 ${FEATURES}: ${TRAIN} ${META_TRAIN}
-	make -C ../feature-calcuration DATA=${TRAIN} METADATA=${META_TRAIN} FEATURES=${FEATNAME}
+	make -C ../feature-calcuration ${FEATURES} DATA=${TRAIN} METADATA=${META_TRAIN} FEATNAME=${FEATNAME}
