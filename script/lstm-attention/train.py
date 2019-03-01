@@ -7,6 +7,8 @@ from pathlib import Path
 
 from argparse import ArgumentParser
 
+from sklearn.preprocessing import StandardScaler
+
 if __name__ == "__main__":
     sys.path.append("../..")
     sys.path.append("..")
@@ -62,6 +64,11 @@ if __name__ == "__main__":
         features.append(feats)
     train = np.concatenate(features, axis=2)
 
+    scaler = {}
+    for i in range(train.shape[1]):
+        scaler[i] = StandardScaler()
+        train[:, i, :] = scaler[i].fit_transform(train[:, i, :])
+
     answer = pd.read_csv(args.metadata).query("phase == 0").target.values
 
     trainer = NNTrainer(
@@ -98,3 +105,6 @@ if __name__ == "__main__":
     trainer.model = None
     with open(trainer_path / "trainer.pkl", "wb") as f:
         pickle.dump(trainer, f)
+
+    with open(trainer_path / "scaler.pkl", "wb") as f:
+        pickle.dump(scaler, f)
