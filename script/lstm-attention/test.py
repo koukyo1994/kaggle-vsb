@@ -43,6 +43,11 @@ if __name__ == "__main__":
             feats = np.concatenate(feats)
         features.append(feats)
     test = np.concatenate(features, axis=2)
+    with open(f"trainer/{args.tag}/scaler.pkl", "rb") as f:
+        scaler = pickle.load(f)
+    for i in range(test.shape[1]):
+        test[:, i, :] = scaler[i].transform(test[:, i, :])
+
     test_tensor = torch.tensor(test, dtype=torch.float32).to(args.device)
     dataset = torch.utils.data.TensorDataset(test_tensor)
     loader = torch.utils.data.DataLoader(
