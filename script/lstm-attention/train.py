@@ -30,6 +30,7 @@ if __name__ == "__main__":
     parser.add_argument("--seed", default=42, type=int)
     parser.add_argument("--enable_local_test", action="store_true")
     parser.add_argument("--test_size", default=0.3, type=float)
+    parser.add_argument("--scaling", action="store_true")
 
     parser.add_argument("--device", default="cpu")
 
@@ -64,10 +65,12 @@ if __name__ == "__main__":
         features.append(feats)
     train = np.concatenate(features, axis=2)
 
-    scaler = {}
-    for i in range(train.shape[1]):
-        scaler[i] = StandardScaler()
-        train[:, i, :] = scaler[i].fit_transform(train[:, i, :])
+    scaling = {}
+    if args.scaling:
+        logger.info("scaling...")
+        for i in range(train.shape[1]):
+            scaler[i] = StandardScaler()
+            train[:, i, :] = scaler[i].fit_transform(train[:, i, :])
 
     answer = pd.read_csv(args.metadata).query("phase == 0").target.values
 
