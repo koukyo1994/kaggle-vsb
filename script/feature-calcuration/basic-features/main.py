@@ -12,7 +12,7 @@ if __name__ == "__main__":
     sys.path.append("./")
 
     from script.common.utils import timer, get_logger
-    from feature_extraction import prep_data
+    from feature_extraction import prep_data, _transform_ts
 
     parser = ArgumentParser()
     parser.add_argument("--metadata")
@@ -42,9 +42,10 @@ if __name__ == "__main__":
     X = []
     for i in range(nchunk):
         if (i == nchunk - 1) and (n_line % args.nchunk != 0):
-            step = meta.shape[0] - current_head - 1
+            step = meta.signal_id.max() - current_head + 1
         with timer(f"chunk{i+1}", logger):
-            X_temp = prep_data(args.path, current_head, step, args.n_dims)
+            X_temp = prep_data(args.path, _transform_ts, current_head, step,
+                               args.n_dims)
             X.append(X_temp)
             current_head += step
             logger.info(f"current head: {current_head}")

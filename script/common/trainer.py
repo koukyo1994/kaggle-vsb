@@ -70,6 +70,8 @@ class Trainer:
 
         self.logger.info(f"MCC: {search_result['mcc']}")
         self.logger.info(f"threshold: {search_result['threshold']}")
+        self.best_score = search_result["mcc"]
+        self.best_threshold = search_result["best_threshold"]
 
     def score(self):
         self._score(self.local_test_set, self.y_local)
