@@ -46,9 +46,10 @@ if __name__ == "__main__":
     with open(f"trainer/{args.tag}/scaler.pkl", "rb") as f:
         scaler = pickle.load(f)
     logger.info(f"scaler size: {len(scaler)}")
-    for i in range(test.shape[1]):
-        with timer(f"scaling dim{i+1}", logger):
-            test[:, i, :] = scaler[i].transform(test[:, i, :])
+    if len(scaler) > 0:
+        for i in range(test.shape[1]):
+            with timer(f"scaling dim{i+1}", logger):
+                test[:, i, :] = scaler[i].transform(test[:, i, :])
 
     test_tensor = torch.tensor(test, dtype=torch.float32).to(args.device)
     dataset = torch.utils.data.TensorDataset(test_tensor)

@@ -206,7 +206,7 @@ class NNTrainer(Trainer):
                         y_pred.cpu().numpy())[:, 0]
             test_preds += temp / self.n_splits
         search_result = threshold_search(y, test_preds)
-        self.logger.info(f"local test MCC: ", search_result["mcc"])
-        self.logger.info(f"local test threshold: ", search_result["threshold"])
+        self.logger.info(f"local test MCC: { search_result['mcc']}")
+        self.logger.info(f"local test threshold: {search_result['threshold']}")
         self.best_score = search_result["mcc"]
         self.best_threshold = search_result["threshold"]

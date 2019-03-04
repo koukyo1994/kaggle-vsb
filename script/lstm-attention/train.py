@@ -65,7 +65,7 @@ if __name__ == "__main__":
         features.append(feats)
     train = np.concatenate(features, axis=2)
 
-    scaling = {}
+    scaler = {}
     if args.scaling:
         logger.info("scaling...")
         for i in range(train.shape[1]):
