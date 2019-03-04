@@ -1,5 +1,5 @@
-for tag in ls log/lstm-attention/ | grep .log | sed -e 's/.log//'; do \
-  python test.py --features ../features/basic-features/160d/basic_train.pkl --tag $tag; \
+for tag in `ls trainer`; do \
+  python test.py --features ../features/basic-features/160d/basic_test.pkl --tag $tag; \
 done
 
 python ensemble.py

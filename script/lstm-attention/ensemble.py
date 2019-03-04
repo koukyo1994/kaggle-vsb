@@ -17,7 +17,7 @@ if __name__ == "__main__":
             pickles.append(pic)
 
     thres_path = Path("trainer")
-    for t_path in thres_path.iter_dir():
+    for t_path in thres_path.iterdir():
         with open(t_path / "trainer.pkl", "rb") as f:
             tr = pickle.load(f)
             thresholds.append(tr.best_threshold)

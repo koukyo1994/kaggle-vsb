@@ -93,7 +93,6 @@ if __name__ == "__main__":
         threshold = trainer.best_threshold
     else:
         threshold = 0.50
-
     sub["target"] = (pred_3 > threshold).astype(int)
     sub.to_csv(submission_path / f"{trainer.tag}.csv", index=False)
     logger.info(f"created submission {trainer.tag}.csv")
