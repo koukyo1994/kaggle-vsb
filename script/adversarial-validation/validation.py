@@ -11,7 +11,7 @@ if __name__ == "__main__":
     sys.path.append("./")
     from model import LSTMAttentionNet
     from script.common.utils import get_logger
-    from script.common.trainer import NNTrainer
+    from trainer import NNTrainer
 
     parser = ArgumentParser()
     parser.add_argument("--hidden_size", default=128, type=int)
@@ -19,10 +19,12 @@ if __name__ == "__main__":
     parser.add_argument("--n_attention", default=50, type=int)
 
     parser.add_argument("--n_splits", default=5, type=int)
-    parser.add_argument("--seed", default=2019, type=int)
+    parser.add_argument("--n_trial", default=10, type=int)
 
     parser.add_argument("--device", default="cpu")
     parser.add_argument("--n_epochs", default=30, type=int)
+
+    parser.add_argument("--allow", default=0.3, type=float)
 
     parser.add_argument(
         "--train", default="../features/basic-features/160d/train_basic.pkl")
@@ -36,8 +38,9 @@ if __name__ == "__main__":
     logger.info(
         f"hidden_size: {args.hidden_size}, linear_size: {args.linear_size}")
     logger.info(f"n_attention: {args.n_attention}")
-    logger.info(f"n_splits: {args.n_splits}, seed: {args.seed}")
+    logger.info(f"n_splits: {args.n_splits}, n_trial: {args.n_trial}")
     logger.info(f"device: {args.device}, n_epochs: {args.n_epochs}")
+    logger.info(f"allow: {args.allow}")
     logger.info(f"train: {args.train}")
     logger.info(f"test: {args.test}")
 
@@ -61,17 +64,22 @@ if __name__ == "__main__":
         LSTMAttentionNet,
         logger,
         n_splits=args.n_splits,
-        seed=args.seed,
-        enable_local_test=False,
-        test_size=0.0,
+        n_trial=args.n_trial,
         device=args.device,
-        train_batch=128,
-        val_batch=512,
         kwargs={
             "hidden_size": args.hidden_size,
             "linear_size": args.linear_size,
             "input_shape": X.shape,
             "n_attention": args.n_attention
         },
-        anneal=False)
+        name=str(rel_path))
     trainer.fit(X, y, args.n_epochs)
+    train_mask, test_mask = trainer.av_results(args.allow)
+
+    mask_dir = Path("mask" / rel_path)
+    mask_dir.mkdir(exist_ok=True, parents=True)
+    with open(mask_dir / "train_mask.pkl", "rb") as f:
+        pickle.dump(train_mask, f)
+
+    with open(mask_dir / "test_mask.pkl", "rb") as f:
+        pickle.dump(test_mask, f)
