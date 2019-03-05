@@ -175,7 +175,7 @@ class NNTrainer(Trainer):
                 y_pred = model(x_batch).detach()
                 avg_val_loss += self.loss_fn(y_pred,
                                              y_batch).item() / len(loader)
-                valid_preds[i * self.val_batch:(i + 1) *
-                            self.val_batch] = sigmoid(
+                valid_preds[i * self.valid_batch:(i + 1) *
+                            self.valid_batch] = sigmoid(
                                 y_pred.cpu().numpy())[:, 0]
         return valid_preds, avg_val_loss
