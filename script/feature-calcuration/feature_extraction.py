@@ -1,5 +1,5 @@
 import gc
-
+import pickle
 import numpy as np
 import pandas as pd
 import pyarrow.parquet as pq
@@ -144,3 +144,20 @@ def prep_data(path="../input/train.parquet",
         X.append(X_signal)
     X = np.asarray(X)
     return X
+
+
+def square_data(path="../features/basic-features/160d/train_basic.pkl",
+                scalers=None):
+    with open(path, "rb") as f:
+        array = pickle.load(f)
+    for col in range(array.shape[2]):
+        array[:, :, col] = array[:, :, col]**2
+    if scalers:
+        for row in range(array.shape[1]):
+            array[:, row, :] = scalers[row].transform(array[:, row, :])
+    else:
+        scalers = {}
+        for row in range(array.shape[1]):
+            scalers[row] = StandardScaler()
+            array[:, row, :] = scalers[row].fit_transform(array[:, row, :])
+    return scalers, array
