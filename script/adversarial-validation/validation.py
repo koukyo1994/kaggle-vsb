@@ -74,12 +74,19 @@ if __name__ == "__main__":
         },
         name=str(rel_path))
     trainer.fit(X, y, args.n_epochs)
-    train_mask, test_mask = trainer.av_results(args.allow)
+    train_mask, test_mask, train_result, test_result = trainer.av_results(
+        args.allow)
 
     mask_dir = Path("mask" / rel_path)
     mask_dir.mkdir(exist_ok=True, parents=True)
-    with open(mask_dir / "train_mask.pkl", "rb") as f:
+    with open(mask_dir / "train_mask.pkl", "wb") as f:
         pickle.dump(train_mask, f)
 
-    with open(mask_dir / "test_mask.pkl", "rb") as f:
+    with open(mask_dir / "test_mask.pkl", "wb") as f:
         pickle.dump(test_mask, f)
+
+    with open(mask_dir / "train_result.pkl") as f:
+        pickle.dump(train_result, f)
+
+    with open(mask_dir / "test_result.pkl", "wb") as f:
+        pickle.dump(test_result, f)

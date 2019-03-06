@@ -87,7 +87,7 @@ class Trainer:
                                     train_result <= 1 - allow)
         test_mask = np.logical_and(test_result >= allow,
                                    test_result <= 1 - allow)
-        return train_mask, test_mask
+        return train_mask, test_mask, train_result, test_result
 
 
 class NNTrainer(Trainer):
