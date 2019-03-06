@@ -77,7 +77,7 @@ if __name__ == "__main__":
     train_mask, test_mask, train_result, test_result = trainer.av_results(
         args.allow)
 
-    mask_dir = Path("mask" / rel_path)
+    mask_dir = "mask" / rel_path
     mask_dir.mkdir(exist_ok=True, parents=True)
     with open(mask_dir / "train_mask.pkl", "wb") as f:
         pickle.dump(train_mask, f)
