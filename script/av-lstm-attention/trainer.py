@@ -144,16 +144,14 @@ class NNTrainer(Trainer):
                 f"loss: {avg_loss:.4f} val_loss: {avg_val_loss:.4f}")
             self.logger.info(f"val_mcc: {val_mcc:.4f} best_t: {val_threshold}")
             self.logger.info(f"loc_mcc: {loc_mcc:.4f} loc_t: {loc_threshold}")
-            if val_mcc > best_score and loc_mcc > best_loc_score:
+            if loc_mcc > best_loc_score:
                 torch.save(model.state_dict(),
                            self.path / f"best{self.fold}.pt")
-                self.logger.info(f"Save model on epoch {epoch+1}")
-                best_score = val_mcc
+                self.logger.info(f"Save model on epoch {epoch+1}\n")
                 best_loc_score = loc_mcc
-            elif val_mcc > best_score:
+            if val_mcc > best_score:
                 best_score = val_mcc
-            elif loc_mcc > best_loc_score:
-                best_loc_score = loc_mcc
+
         model.load_state_dict(torch.load(self.path / f"best{self.fold}.pt"))
         valid_preds, avg_val_loss = self._val(valid_loader, model)
         local_preds, avg_loc_loss = self._val(self.local_loader, model)
