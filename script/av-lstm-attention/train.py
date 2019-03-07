@@ -11,7 +11,7 @@ if __name__ == "__main__":
     sys.path.append("./")
     from model import LSTMAttentionNet
     from script.common.utils import get_logger
-    from trainer import NNTrainer
+    from script.common.adversarial_trainer import NNTrainer
 
     parser = ArgumentParser()
     parser.add_argument("--hidden_size", default=128, type=int)
@@ -24,6 +24,7 @@ if __name__ == "__main__":
     parser.add_argument("--seed", default=42, type=int)
 
     parser.add_argument("--device", default="cpu")
+    parser.add_argument("--loc_lambda", default=0.1, type=float)
 
     parser.add_argument("--n_epochs", default=50, type=int)
 
@@ -38,6 +39,7 @@ if __name__ == "__main__":
     logger.info(f"n_attention: {args.n_attention}")
     logger.info(f"train_batch: {args.train_batch}")
     logger.info(f"n_splits: {args.n_splits}, seed: {args.seed}")
+    logger.info(f"loc_lambda: {args.loc_lambda}")
     logger.info(f"n_epochs: {args.n_epochs}")
     logger.info(f"train_set: {args.train_set}")
     logger.info(f"validation_set: {args.validation_set}")
@@ -53,7 +55,8 @@ if __name__ == "__main__":
         logger,
         validation_set,
         n_splits=5,
-        seed=42,
+        seed=args.seed,
+        loc_lambda=args.loc_lambda,
         device="cpu",
         train_batch=128,
         kwargs={
