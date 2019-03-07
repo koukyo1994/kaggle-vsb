@@ -173,3 +173,24 @@ class NNTrainer(Trainer):
                             self.val_batch] = sigmoid(
                                 y_pred.cpu().numpy())[:, 0]
         return valid_preds, avg_val_loss
+
+    def local_test(self):
+        model = self.model(**self.kwargs)
+        model.to(self.device)
+
+        test_preds = np.zeros(self.valid_set[0].shape[0])
+        for path in self.path.iterdir():
+            model.load_state_dict(torch.load(path))
+            model.eval()
+            temp = np.zeros_like(test_preds)
+            for i, (x_batch, y_batch) in enumerate(self.local_loader):
+                with torch.no_grad():
+                    y_pred = model(x_batch).detach()
+                    temp[i * self.val_batch:(i + 1) *
+                         self.val_batch] = sigmoid(y_pred.cpu().numpy())[:, 0]
+            test_preds += temp / self.n_splits
+        search_result = threshold_search(self.valid_set[1], test_preds)
+        self.logger.info(f"local test MCC: { search_result['mcc']}")
+        self.logger.info(f"local test threshold: {search_result['threshold']}")
+        self.av_score = search_result["mcc"]
+        self.av_threshold = search_result["threshold"]

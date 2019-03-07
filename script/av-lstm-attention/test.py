@@ -24,6 +24,7 @@ if __name__ == "__main__":
     parser.add_argument("--device", default="cpu")
     parser.add_argument("--features", help="path of features", nargs="*")
     parser.add_argument("--sample", default="../input/sample_submission.csv")
+    parser.add_argument("--scaling", action="store_true")
 
     args = parser.parse_args()
     logger = get_logger("av-lstm-attention-test", "av-lstm-attention-test")
@@ -43,6 +44,12 @@ if __name__ == "__main__":
             feats = np.concatenate(feats)
         features.append(feats)
     test = np.concatenate(features, axis=2)
+
+    if args.scaling:
+        with open(f"trainer/{args.tag}/scaler.pkl", "rb") as f:
+            scaler = pickle.load(f)
+        for i in range(test.shape[1]):
+            test[:, i, :] = scaler[i].transform(test[:, i, :])
 
     test_tensor = torch.tensor(test, dtype=torch.float32).to(args.device)
     dataset = torch.utils.data.TensorDataset(test_tensor)

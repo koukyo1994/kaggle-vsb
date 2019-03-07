@@ -14,7 +14,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     feature_path = Path(args.train)
-    rel_path = feature_path.parent.relative_to("../features")
+    av_path = Path(args.av)
+    rel_path = av_path.parent.relative_to("../adversarial-validation/mask/")
 
     out_path = Path("../features/av-features") / rel_path
     out_path.mkdir(exist_ok=True, parents=True)
@@ -22,7 +23,7 @@ if __name__ == "__main__":
     with open(feature_path, "rb") as f:
         X_train = pickle.load(f)
 
-    with open(Path(args.av), "rb") as f:
+    with open(av_path, "rb") as f:
         prob_mask = pickle.load(f)
 
     meta = pd.read_csv("../input/metadata_train.csv")
