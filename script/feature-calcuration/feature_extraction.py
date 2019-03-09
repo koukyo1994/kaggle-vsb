@@ -161,3 +161,37 @@ def square_data(path="../features/basic-features/160d/train_basic.pkl",
             scalers[row] = StandardScaler()
             array[:, row, :] = scalers[row].fit_transform(array[:, row, :])
     return scalers, array
+
+
+def feature_calculator(ts, func=np.mean, n_dim=160):
+    bucket_size = int(800000 / n_dim)
+    new_ts = []
+    for i in range(0, 800000, bucket_size):
+        ts_range = ts[i:i + bucket_size]
+        if isinstance(func, list):
+            for f in func:
+                new_ts.append(f(ts_range))
+        else:
+            new_ts.append(func(ts_range))
+    return np.asarray(new_ts).reshape(-1, 1)
+
+
+def prep_data_feature_wise(path="../input/train.parquet",
+                           func=[],
+                           offset=0,
+                           ncols=1452,
+                           n_dim=160):
+    praq_train = pq.read_pandas(
+        path,
+        columns=[str(i) for i in range(offset, offset + ncols)]).to_pandas()
+    X = []
+    for i in tqdm(range(offset, offset + ncols, 3)):
+        X_signal = []
+        for phase in [0, 1, 2]:
+            trns = feature_calculator(
+                praq_train[str(i + phase)], func, n_dim=n_dim)
+            X_signal.append(trns)
+        X_signal = np.concatenate(X_signal, axis=1)
+        X.append(X_signal)
+    X = np.asarray(X)
+    return X
