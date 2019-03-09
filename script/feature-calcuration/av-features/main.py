@@ -18,6 +18,7 @@ if __name__ == "__main__":
     rel_path = av_path.parent.relative_to("../adversarial-validation/mask/")
 
     out_path = Path("../features/av-features") / rel_path
+    out_path = out_path / f"th_{args.threshold}"
     out_path.mkdir(exist_ok=True, parents=True)
 
     with open(feature_path, "rb") as f:
