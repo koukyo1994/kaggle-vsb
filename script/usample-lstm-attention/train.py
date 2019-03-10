@@ -78,7 +78,7 @@ if __name__ == "__main__":
     answer = pd.read_csv(args.metadata).query("phase == 0").target.values
 
     n_true = len(answer[answer == 1])
-    idx = np.arange(0, len(answer))
+    idx = np.arange(0, len(answer)).reshape(-1, 1)
     rus = RandomUnderSampler(
         sampling_strategy={
             1: n_true,
