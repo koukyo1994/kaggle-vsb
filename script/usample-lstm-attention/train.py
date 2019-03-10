@@ -86,7 +86,7 @@ if __name__ == "__main__":
         },
         random_state=args.seed)
     use_idx, y = rus.fit_resample(idx, answer)
-    X = train[use_idx]
+    X = train[use_idx.reshape(-1)]
 
     trainer = NNTrainer(
         LSTMAttentionNet,
