@@ -173,7 +173,7 @@ def feature_calculator(ts, func=np.mean, n_dim=160):
                 new_ts.append(f(ts_range))
         else:
             new_ts.append(func(ts_range))
-    return np.asarray(new_ts).reshape(-1, 1)
+    return np.asarray(new_ts).reshape((n_dim, -1))
 
 
 def prep_data_feature_wise(path="../input/train.parquet",
