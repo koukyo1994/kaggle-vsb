@@ -82,7 +82,7 @@ if __name__ == "__main__":
     rus = RandomUnderSampler(
         sampling_strategy={
             1: n_true,
-            0: args.sample_ratio * n_true
+            0: int(args.sample_ratio * n_true)
         },
         random_state=args.seed)
     use_idx, y = rus.fit_resample(idx, answer)
