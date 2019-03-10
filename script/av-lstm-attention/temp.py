@@ -4,7 +4,6 @@ import pickle
 import numpy as np
 
 import torch
-import torch.nn as nn
 import torch.utils.data
 
 from pathlib import Path
@@ -15,7 +14,6 @@ if __name__ == "__main__":
     sys.path.append("../")
     sys.path.append("./")
     from model import LSTMAttentionNet
-    from trainer import NNTrainer
     from script.common.train_helpers import sigmoid, threshold_search
 
     parser = ArgumentParser()
@@ -32,10 +30,10 @@ if __name__ == "__main__":
         valid = pickle.load(f)
 
     x = torch.tensor(valid[0], dtype=torch.float32).to("cpu")
-    y = torch.tensor(
-        valid[1][:, np.newaxis], dtype=torch.float32).to("cpu")
+    y = torch.tensor(valid[1][:, np.newaxis], dtype=torch.float32).to("cpu")
     dataset = torch.utils.data.TensorDataset(x, y)
-    loader = torch.utils.data.DataLoader(dataset, batch_size=128, shuffle=False)
+    loader = torch.utils.data.DataLoader(
+        dataset, batch_size=128, shuffle=False)
 
     bin_dir = Path(f"bin/{args.tag}")
     model = LSTMAttentionNet(**trainer.kwargs)
@@ -47,8 +45,7 @@ if __name__ == "__main__":
         temp = np.zeros_like(preds)
         for i, (x_batch, y_batch) in enumerate(loader):
             y_pred = model(x_batch).detach()
-            temp[i * 128:(i + 1) * 128] = sigmoid(
-                y_pred.cpu().numpy())[:, 0]
+            temp[i * 128:(i + 1) * 128] = sigmoid(y_pred.cpu().numpy())[:, 0]
         preds += temp / 5
     search_result = threshold_search(valid[1], preds)
     print(f"MCC: {search_result['mcc']:.4f}")

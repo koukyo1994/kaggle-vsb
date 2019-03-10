@@ -78,13 +78,15 @@ if __name__ == "__main__":
     answer = pd.read_csv(args.metadata).query("phase == 0").target.values
 
     n_true = len(answer[answer == 1])
+    idx = np.arange(0, len(answer))
     rus = RandomUnderSampler(
         sampling_strategy={
             1: n_true,
             0: args.sample_ratio * n_true
         },
         random_state=args.seed)
-    X, y = rus.fit_resample(train, answer)
+    use_idx, y = rus.fit_resample(idx, answer)
+    X = train[use_idx]
 
     trainer = NNTrainer(
         LSTMAttentionNet,
