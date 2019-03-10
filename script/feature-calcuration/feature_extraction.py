@@ -8,6 +8,8 @@ from sklearn.preprocessing import StandardScaler
 from tsfresh.feature_extraction import extract_features
 from tqdm import tqdm
 
+from denoising import highpass_wavelet
+
 
 def fresh_features(path="../input/train.parquet",
                    offset=0,
@@ -105,6 +107,45 @@ def _transform_ts(ts, n_dim=160, min_max=(-1, 1)):
     return np.asarray(new_ts)
 
 
+def _calculator(ts, i, bucket_size):
+    ts_range: np.ndarray = ts[i:i + bucket_size]
+    mean = ts_range.mean()
+    std = ts_range.std()
+    std_top = mean + std
+    std_bot = mean - std
+    percentile_calc = np.percentile(ts_range, [0, 1, 25, 50, 75, 99, 100])
+    max_range = percentile_calc[-1] - percentile_calc[0]
+    relative_percentile = percentile_calc - mean
+    return np.concatenate([
+        np.asarray([mean, std, std_top, std_bot, max_range]), percentile_calc,
+        relative_percentile
+    ])
+
+
+def _trns_after_denoising(ts, hp=True, dn=True, n_dim=160, min_max=(-1, 1)):
+    ts_hp, ts_dn = highpass_wavelet(ts)
+    assert hp or dn
+    if hp:
+        ts_hp_std = _min_max_transf(ts_hp, min_data=-128, max_data=127)
+    if dn:
+        ts_dn_std = _min_max_transf(ts_dn, min_data=-128, max_data=127)
+
+    bucket_size = int(800000 / n_dim)
+    new_ts = []
+    for i in range(0, 800000, bucket_size):
+        if hp:
+            hp_feats = _calculator(ts_hp_std, i, bucket_size)
+        if dn:
+            dn_feats = _calculator(ts_dn_std, i, bucket_size)
+        if hp and dn:
+            new_ts.append(np.concatenate([hp_feats, dn_feats]))
+        elif hp:
+            new_ts.append(hp_feats)
+        elif dn:
+            new_ts.append(dn_feats)
+    return np.asarray(new_ts)
+
+
 def _median_transform(ts, n_dim=160, min_max=(-1, 1)):
     ts_std = _min_max_transf(ts, min_data=-128, max_data=127)
     bucket_size = int(800000 / n_dim)
@@ -190,6 +231,28 @@ def prep_data_feature_wise(path="../input/train.parquet",
         for phase in [0, 1, 2]:
             trns = feature_calculator(
                 praq_train[str(i + phase)], func, n_dim=n_dim)
+            X_signal.append(trns)
+        X_signal = np.concatenate(X_signal, axis=1)
+        X.append(X_signal)
+    X = np.asarray(X)
+    return X
+
+
+def prep_data_denoising(path="../input/train.parquet",
+                        offset=0,
+                        ncols=1452,
+                        n_dim=160,
+                        hp=True,
+                        dn=True):
+    praq_train = pq.read_pandas(
+        path,
+        columns=[str(i) for i in range(offset, offset + ncols)]).to_pandas()
+    X = []
+    for i in tqdm(range(offset, offset + ncols, 3)):
+        X_signal = []
+        for phase in [0, 1, 2]:
+            trns = _trns_after_denoising(
+                praq_train[str(i + phase)], n_dim=n_dim, hp=hp, dn=dn)
             X_signal.append(trns)
         X_signal = np.concatenate(X_signal, axis=1)
         X.append(X_signal)
