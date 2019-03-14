@@ -12,12 +12,13 @@ if __name__ == "__main__":
     sys.path.append("../..")
     sys.path.append("..")
     sys.path.append("./")
-    from model import LSTMAttentionNet
+    from model import LSTMAttentionNet, CNNBaseModel
     from script.common.utils import get_logger
     parser = ArgumentParser()
     parser.add_argument("--hidden_size", default=128, type=int)
     parser.add_argument("--linear_size", default=100, type=int)
     parser.add_argument("--n_attention", default=50, type=int)
+    parser.add_argument("--o_channels", default=256, type=int)
 
     parser.add_argument("--train_batch", default=128, type=int)
 
@@ -31,6 +32,8 @@ if __name__ == "__main__":
 
     parser.add_argument("--n_epochs", default=50, type=int)
     parser.add_argument("--fit_to_loc", action="store_true")
+
+    parser.add_argument("--model", default="LSTMAttentionNet")
 
     parser.add_argument("--train_set")
     parser.add_argument("--validation_set")
@@ -46,6 +49,7 @@ if __name__ == "__main__":
     logger.info(
         f"hidden_size: {args.hidden_size}, linear_size: {args.linear_size}")
     logger.info(f"n_attention: {args.n_attention}")
+    logger.info(f"o_channels: {args.o_channels}")
     logger.info(f"train_batch: {args.train_batch}")
     logger.info(f"n_splits: {args.n_splits}, seed: {args.seed}")
     logger.info(f"loc_lambda: {args.loc_lambda}")
@@ -69,9 +73,27 @@ if __name__ == "__main__":
             validation_set[0][:, i, :] = scaler[i].transform(
                 validation_set[0][:, i, :])
 
+    if args.model == "LSTMAttentionNet":
+        model = LSTMAttentionNet
+        kwargs = {
+            "hidden_size": args.hidden_size,
+            "linear_size": args.linear_size,
+            "input_shape": train_set[0].shape,
+            "n_attention": args.n_attention
+        }
+    elif args.model == "CNNBaseModel":
+        model = CNNBaseModel
+        kwargs = {
+            "linear_size": args.linear_size,
+            "o_channels": args.o_channels,
+            "input_shape": train_set[0].shape
+        }
+    else:
+        raise NameError(f"{args.model} not found")
+
     if args.fit_to_loc:
         trainer = NNTrainer(
-            LSTMAttentionNet,
+            model,
             logger,
             validation_set,
             n_splits=5,
@@ -79,27 +101,17 @@ if __name__ == "__main__":
             loc_lambda=args.loc_lambda,
             device="cpu",
             train_batch=128,
-            kwargs={
-                "hidden_size": args.hidden_size,
-                "linear_size": args.linear_size,
-                "input_shape": train_set[0].shape,
-                "n_attention": args.n_attention
-            })
+            kwargs=kwargs)
     else:
         trainer = NNTrainer(
-            LSTMAttentionNet,
+            model,
             logger,
             validation_set,
             n_splits=args.n_splits,
             seed=args.seed,
             device=args.device,
             train_batch=args.train_batch,
-            kwargs={
-                "hidden_size": args.hidden_size,
-                "linear_size": args.linear_size,
-                "input_shape": train_set[0].shape,
-                "n_attention": args.n_attention
-            })
+            kwargs=kwargs)
 
     trainer.fit(train_set[0], train_set[1], args.n_epochs)
     trainer_path = Path(f"trainer/{trainer.tag}")
