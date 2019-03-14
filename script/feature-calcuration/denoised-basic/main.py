@@ -25,7 +25,7 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
     outdir = Path(
-        f"../features/denoised-basic/{args.n_dims}d/{args.dn}{args.hp}")
+        f"../features/denoised-basic/{args.n_dims}d/flat/{args.dn}{args.hp}")
     outdir.mkdir(exist_ok=True, parents=True)
 
     logger = get_logger(name="denoised", tag=f"denoised-basic/{args.n_dims}d")

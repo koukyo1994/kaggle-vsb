@@ -4,6 +4,19 @@ import scipy.signal as signal
 
 from scipy.signal import butter
 
+from numba import jit, int32
+
+
+@jit('float32(float32[:,:], int32, int32)')
+def flatiron(x, alpha=50., beta=1):
+    new_x = np.zeros_like(x)
+    zero = x[0, :]
+    for i in range(1, len(x)):
+        x_ = x[i]
+        zero = zero * 0.98 + x_ * 0.02
+        new_x[i] = x_ - zero
+    return new_x
+
 
 def _mad_dest(d, axis=None):
     return np.mean(np.absolute(d - np.mean(d, axis)), axis)

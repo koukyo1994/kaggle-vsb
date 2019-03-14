@@ -8,7 +8,7 @@ from sklearn.preprocessing import StandardScaler
 from tsfresh.feature_extraction import extract_features
 from tqdm import tqdm
 
-from denoising import highpass_wavelet
+from denoising import highpass_wavelet, flatiron
 
 
 def fresh_features(path="../input/train.parquet",
@@ -247,6 +247,9 @@ def prep_data_denoising(path="../input/train.parquet",
     praq_train = pq.read_pandas(
         path,
         columns=[str(i) for i in range(offset, offset + ncols)]).to_pandas()
+    praq_columns = praq_train.columns
+    data = flatiron(praq_train.values)
+    praq_train = pd.DataFrame(data=data, columns=praq_columns)
     X = []
     for i in tqdm(range(offset, offset + ncols, 3)):
         X_signal = []
