@@ -175,9 +175,7 @@ def prep_data(path="../input/train.parquet",
     praq_train = pq.read_pandas(
         path,
         columns=[str(i) for i in range(offset, offset + ncols)]).to_pandas()
-    praq_columns = praq_train.columns
-    data = flatiron(praq_train.values)
-    praq_train = pd.DataFrame(data=data, columns=praq_columns)
+
     X = []
     for i in tqdm(range(offset, offset + ncols, 3)):
         X_signal = []

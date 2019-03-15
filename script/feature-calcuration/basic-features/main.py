@@ -22,7 +22,7 @@ if __name__ == "__main__":
     parser.add_argument("--nchunk", default=2, type=int)
 
     args = parser.parse_args()
-    outdir = Path(f"../features/basic-features/{args.n_dims}d/flat")
+    outdir = Path(f"../features/basic-features/{args.n_dims}d")
     outdir.mkdir(exist_ok=True, parents=True)
 
     logger = get_logger(name="basic", tag=f"basic_features/{args.n_dims}d")

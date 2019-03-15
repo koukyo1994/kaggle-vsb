@@ -42,7 +42,7 @@ if __name__ == "__main__":
         if isinstance(feats, list):
             feats = np.concatenate(feats)
         features.append(feats)
-    test = np.concatenate(features, axis=2)
+    test = np.concatenate(features, axis=0)
     with open(f"trainer/{args.tag}/scaler.pkl", "rb") as f:
         scaler = pickle.load(f)
     logger.info(f"scaler size: {len(scaler)}")

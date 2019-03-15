@@ -37,7 +37,8 @@ if __name__ == "__main__":
     parser.add_argument("--n_epochs", default=50, type=int)
 
     parser.add_argument("--features", help="paths of features", nargs="*")
-    parser.add_argument("--metadata", help="metadata to retrieve answer")
+    parser.add_argument(
+        "--metadata", help="metadata to retrieve answer", nargs="*")
 
     args = parser.parse_args()
 
@@ -63,7 +64,7 @@ if __name__ == "__main__":
         if isinstance(feats, list):
             feats = np.concatenate(feats)
         features.append(feats)
-    train = np.concatenate(features, axis=2)
+    train = np.concatenate(features, axis=0)
 
     scaler = {}
     if args.scaling:
@@ -72,7 +73,12 @@ if __name__ == "__main__":
             scaler[i] = StandardScaler()
             train[:, i, :] = scaler[i].fit_transform(train[:, i, :])
 
-    answer = pd.read_csv(args.metadata).query("phase == 0").target.values
+    answers = []
+    for path in args.metadata:
+        path = Path(path)
+        answer = pd.read_csv(path).query("phase == 0").target.values
+        answers.append(answer)
+    answer = np.concatenate(answers)
 
     trainer = NNTrainer(
         LSTMAttentionNet,
