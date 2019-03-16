@@ -1,3 +1,4 @@
+import pickle
 import numpy as np
 import pandas as pd
 import pyarrow.parquet as pq
@@ -9,7 +10,7 @@ from tqdm import tqdm
 
 
 class ShakingAugmentor:
-    def __init__(self, path, meta_path):
+    def __init__(self, path, meta_path, support_dict: dict):
         self.path = Path(path)
         self.meta_path = Path(meta_path)
 
@@ -24,6 +25,8 @@ class ShakingAugmentor:
         self.neg_idx: list = self.meta.query(
             "phase == 0 & target == 0").target.index.tolist()
 
+        self.support_dict = support_dict
+
     def __create_new_ts(self, ts):
         new_ts = np.zeros((800000, 3))
         cut_off_idx = int(np.random.rand() * 800000)
@@ -34,17 +37,28 @@ class ShakingAugmentor:
         return new_ts
 
     def augment(self, n_pos=100, n_neg=100, n_new_per_col=2, seed=1213):
-        np.random.seed = seed
         if n_pos > len(self.pos_idx):
             n_pos = len(self.pos_idx)
 
         if n_neg > len(self.neg_idx):
             n_neg = len(self.neg_idx)
 
+        np.random.seed = seed
+
         selected_pos_idx = np.sort(
             np.random.choice(self.pos_idx, n_pos, replace=False))
         selected_neg_idx = np.sort(
             np.random.choice(self.neg_idx, n_neg, replace=False))
+
+        if len(self.support_dict) > 0:
+            pos_list = self.support_dict["pos"]
+            neg_list = self.support_dict["neg"]
+            n_pos = min(len(pos_list), n_pos)
+            n_neg = min(len(neg_list), n_neg)
+            selected_pos_idx = np.sort(
+                np.random.choice(pos_list, n_pos, replace=False))
+            selected_neg_idx = np.sort(
+                np.random.choice(neg_list, n_neg, replace=False))
         selected_pos_cols = [
             str(i + j) for i in selected_pos_idx for j in range(3)
         ]
@@ -110,10 +124,25 @@ if __name__ == '__main__':
     parser.add_argument("--n_neg", default=10, type=int)
     parser.add_argument("--n_new_per_col", default=2, type=int)
     parser.add_argument("--seed", default=1213, type=int)
+    parser.add_argument("--support")
 
     args = parser.parse_args()
+
+    with open(args.support, "rb") as f:
+        support = pickle.load(f)
+
+    similar_to_test = set(
+        (np.argwhere(support < 0.8).reshape(-1) * 3).tolist())
+    metadata: pd.DataFrame = pd.read_csv("../input/metadata_train.csv")
+    pos = set(metadata.query("phase == 0 & target == 1").index.values.tolist())
+    neg = set(metadata.query("phase == 0 & target == 0").index.values.tolist())
+
+    similar_pos = list(similar_to_test.intersection(pos))
+    similar_neg = list(similar_to_test.intersection(neg))
+    support_dict = {"pos": similar_pos, "neg": similar_neg}
+
     aug = ShakingAugmentor("../input/train.parquet",
-                           "../input/metadata_train.csv")
+                           "../input/metadata_train.csv", support_dict)
     new_ts, new_meta = aug.augment(
         n_pos=args.n_pos,
         n_neg=args.n_neg,
