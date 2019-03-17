@@ -5,6 +5,8 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.utils.data
 
+import lightgbm as lgb
+
 import numpy as np
 
 from pathlib import Path
@@ -210,3 +212,57 @@ class NNTrainer(Trainer):
         self.logger.info(f"local test threshold: {search_result['threshold']}")
         self.best_score = search_result["mcc"]
         self.best_threshold = search_result["threshold"]
+
+
+def log_evaluation(logger, period=1, show_stdv=True):
+    def _callback(env):
+        if period > 0 and env.evaluation_result_list and (
+                env.iteration + 1) % period == 0:
+            result = '\t'.join([
+                lgb.callback._format_eval_result(x, show_stdv)
+                for x in env.evaluation_result_list
+            ])
+            logger.info('[{}]\t{}'.format(env.iteration + 1, result))
+
+    _callback.order = 10
+    return _callback
+
+
+def lgb_matthews_corrcoef(y_true, y_pred):
+    search_result = threshold_search(y_true, y_pred)
+    return 'mcc', search_result["mcc"], True
+
+
+class LGBMTrainer(Trainer):
+    def __init__(self,
+                 logger,
+                 n_splits=5,
+                 seed=42,
+                 enable_local_test=False,
+                 test_size=0.3,
+                 kwargs={}):
+        super().__init__(
+            logger,
+            n_splits=n_splits,
+            seed=seed,
+            enable_local_test=enable_local_test,
+            test_size=test_size)
+        self.kwargs = kwargs
+        self.trees = []
+
+    def _fit(self, X_train, y_train, n_epochs, eval_set=()):
+        model = lgb.LGBMClassifier(n_estimators=n_epochs, **self.kwargs)
+        model.fit(
+            X_train,
+            y_train,
+            eval_set=eval_set,
+            early_stopping_rounds=10,
+            eval_metric=lgb_matthews_corrcoef,
+            callbacks=[log_evaluation(self.logger, period=10)])
+        self.trees.append(model)
+        valid_preds = self._val(*eval_set, model)
+        return valid_preds
+
+    def _val(self, X_val, y_val, model):
+        valid_preds = model.predict_proba(X_val)[:, 0]
+        return valid_preds

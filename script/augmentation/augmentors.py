@@ -9,6 +9,63 @@ from pathlib import Path
 from tqdm import tqdm
 
 
+class VerticalShufflingAugmentor:
+    def __init__(self, path, meta_path, support_dict: dict):
+        self.path = Path(path)
+        self.meta_path = Path(meta_path)
+
+        self.meta: pd.DataFrame = pd.read_csv(self.meta_path)
+
+        with open(self.path, "rb") as f:
+            self.features: np.ndarray = pickle.load(f)
+
+        self.n_line: int = self.meta.shape[0]
+        self.n_pair = int(self.n_line // 3)
+
+        self.pos_idx: list = self.meta.query(
+            "phase == 0 & target == 1").target.index.tolist()
+        self.neg_idx: list = self.meta.query(
+            "phase == 0 & target == 1").target.index.tolist()
+
+        self.support_dict = support_dict
+
+    def __create_new_feats(self, feats, n_shuffle=2):
+        if n_shuffle > 5:
+            n_shuffle = 5
+        nfeats = int(feats.shape[2] // 3)
+        new_feats_list = list()
+        idx_list = [0, 1, 2]
+        permutated = list()
+        permutated.append(idx_list)
+        for i in range(n_shuffle):
+            new_feats = np.zeros_like(feats)
+            while True:
+                idx_list = np.random.permutation(idx_list).tolist()
+                if idx_list not in permutated:
+                    permutated.append(idx_list)
+                    break
+            top_feats = feats[:, :, idx_list[0] * nfeats:(idx_list[0] + 1) *
+                              nfeats]
+            mid_feats = feats[:, :, idx_list[1] * nfeats:(idx_list[1] + 1) *
+                              nfeats]
+            bot_feats = feats[:, :, idx_list[2] * nfeats:(idx_list[2] + 1) *
+                              nfeats]
+            new_feats[:, :, :nfeats] = top_feats
+            new_feats[:, :, nfeats:2 * nfeats] = mid_feats
+            new_feats[:, :, 2 * nfeats:3 * nfeats] = bot_feats
+            new_feats_list.append(new_feats)
+        return new_feats_list
+
+    def augment(self, n_pos=100, n_neg=100, n_shuffle=2, seed=1213):
+        if n_pos > len(self.pos_idx):
+            n_pos = len(self.pos_idx)
+
+        if n_neg > len(self.neg_idx):
+            n_neg = len(self.neg_idx)
+
+        np.random.seed = seed
+
+
 class ShakingAugmentor:
     def __init__(self, path, meta_path, support_dict: dict):
         self.path = Path(path)
@@ -18,7 +75,6 @@ class ShakingAugmentor:
 
         self.n_line: int = self.meta.shape[0]
         self.n_pair = int(self.n_line // 3)
-        self.augmented_data = None
 
         self.pos_idx: list = self.meta.query(
             "phase == 0 & target == 1").target.index.tolist()
