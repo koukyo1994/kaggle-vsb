@@ -1,9 +1,13 @@
 import numpy as np
+import pywt
 
 from scipy import cluster
 from scipy import stats
-from scipy.signal import find_peaks, peak_widths, peak_prominences
+from scipy.signal import (find_peaks, peak_widths, peak_prominences, sosfilt,
+                          butter)
 from tqdm import tqdm
+
+from joblib import Parallel, delayed
 
 
 def find_zero_crossing(signal: np.ndarray):
@@ -28,6 +32,32 @@ def find_origin(signal: np.ndarray):
         return b
 
 
+def mad(x, axis=None):
+    return np.mean(np.abs(x - np.mean(x, axis)), axis)
+
+
+def wavelet_denoise(x, wavelet="db1", mode="hard"):
+    c_a, c_d = pywt.dwt(x, wavelet)
+    sigma = 1 / 0.6745 * mad(np.abs(c_d))
+    threshold = sigma * np.sqrt(2 * np.log(len(x)))
+    c_d_t = pywt.threshold(c_d, threshold, mode=mode)
+    y = pywt.idwt(np.zeros_like(c_a), c_d_t, wavelet)
+    return y
+
+
+def highpass_filter(x, low_cutoff=1000):
+    n_samples = 800000
+    sample_duration = 0.02
+    sample_rate = n_samples * 1 / sample_duration
+
+    nyquist = 0.5 * sample_rate
+    norm_low_cutoff = low_cutoff / nyquist
+
+    sos = butter(10, Wn=[norm_low_cutoff], btype="highpass", output="sos")
+    filtered_signal = sosfilt(sos, x)
+    return filtered_signal
+
+
 def signal_origins(signals: np.ndarray):
     origins = []
     for i in tqdm(range(signals.shape[1])):
@@ -37,6 +67,8 @@ def signal_origins(signals: np.ndarray):
 
 
 def compute_features(signal: np.ndarray, origin: int, funcs: list):
+    signal = highpass_filter(signal, 1e4)
+    signal = wavelet_denoise(signal)
     signal = np.roll(signal, 800000 - origin)
     features = []
     for func in funcs:
@@ -75,8 +107,9 @@ def bucketed_entropy(signal: np.ndarray):
 
 def prep_features(signals: np.ndarray, origins: np.ndarray):
     funcs = [peaks, signal_entropy, bucketed_entropy]
-    sig_feat = []
-    for i, origin in tqdm(zip(range(signals.shape[1]), origins)):
-        features = compute_features(signals[:, i], origin, funcs)
-        sig_feat.append(features)
+    sig_feat = Parallel(
+        n_jobs=-1, verbose=1)([
+            delayed(compute_features)(signals[:, i], origin, funcs)
+            for i, origin in zip(range(signals.shape[1]), origins)
+        ])
     return np.array(sig_feat)

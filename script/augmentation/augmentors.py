@@ -23,16 +23,16 @@ class VerticalShufflingAugmentor:
         self.n_pair = int(self.n_line // 3)
 
         self.pos_idx: list = self.meta.query(
-            "phase == 0 & target == 1").target.index.tolist()
+            "phase == 0 & target == 1").target.index // 3
         self.neg_idx: list = self.meta.query(
-            "phase == 0 & target == 1").target.index.tolist()
+            "phase == 0 & target == 0").target.index // 3
 
         self.support_dict = support_dict
 
     def __create_new_feats(self, feats, n_shuffle=2):
         if n_shuffle > 5:
             n_shuffle = 5
-        nfeats = int(feats.shape[2] // 3)
+        nfeats = int(feats.shape[1] // 3)
         new_feats_list = list()
         idx_list = [0, 1, 2]
         permutated = list()
@@ -44,15 +44,15 @@ class VerticalShufflingAugmentor:
                 if idx_list not in permutated:
                     permutated.append(idx_list)
                     break
-            top_feats = feats[:, :, idx_list[0] * nfeats:(idx_list[0] + 1) *
+            top_feats = feats[:, idx_list[0] * nfeats:(idx_list[0] + 1) *
                               nfeats]
-            mid_feats = feats[:, :, idx_list[1] * nfeats:(idx_list[1] + 1) *
+            mid_feats = feats[:, idx_list[1] * nfeats:(idx_list[1] + 1) *
                               nfeats]
-            bot_feats = feats[:, :, idx_list[2] * nfeats:(idx_list[2] + 1) *
+            bot_feats = feats[:, idx_list[2] * nfeats:(idx_list[2] + 1) *
                               nfeats]
-            new_feats[:, :, :nfeats] = top_feats
-            new_feats[:, :, nfeats:2 * nfeats] = mid_feats
-            new_feats[:, :, 2 * nfeats:3 * nfeats] = bot_feats
+            new_feats[:, :nfeats] = top_feats
+            new_feats[:, nfeats:2 * nfeats] = mid_feats
+            new_feats[:, 2 * nfeats:3 * nfeats] = bot_feats
             new_feats_list.append(new_feats)
         return new_feats_list
 
@@ -63,7 +63,38 @@ class VerticalShufflingAugmentor:
         if n_neg > len(self.neg_idx):
             n_neg = len(self.neg_idx)
 
-        np.random.seed = seed
+        np.random.seed(seed)
+
+        selected_pos_idx = np.sort(
+            np.random.choice(self.pos_idx, n_pos, replace=False))
+        selected_neg_idx = np.sort(
+            np.random.choice(self.neg_idx, n_neg, replace=False))
+
+        if len(self.support_dict) > 0:
+            pos_list = self.support_dict["pos"]
+            neg_list = self.support_dict["neg"]
+            n_pos = min(len(pos_list), n_pos)
+            n_neg = min(len(neg_list), n_neg)
+            selected_pos_idx = np.sort(
+                np.random.choice(pos_list, n_pos, replace=False))
+            selected_neg_idx = np.sort(
+                np.random.choice(neg_list, n_neg, replace=False))
+
+        new_feats = []
+        labels = []
+        for i in tqdm(selected_pos_idx):
+            feats = self.__create_new_feats(
+                self.features[i, :, :], n_shuffle=n_shuffle)
+            new_feats += feats
+            labels += [1] * n_shuffle
+
+        for i in tqdm(selected_neg_idx):
+            feats = self.__create_new_feats(
+                self.features[i, :, :], n_shuffle=n_shuffle)
+            new_feats += feats
+            labels += [0] * n_shuffle
+
+        return np.asarray(new_feats), np.asarray(labels)
 
 
 class ShakingAugmentor:
@@ -99,7 +130,7 @@ class ShakingAugmentor:
         if n_neg > len(self.neg_idx):
             n_neg = len(self.neg_idx)
 
-        np.random.seed = seed
+        np.random.seed(seed)
 
         selected_pos_idx = np.sort(
             np.random.choice(self.pos_idx, n_pos, replace=False))

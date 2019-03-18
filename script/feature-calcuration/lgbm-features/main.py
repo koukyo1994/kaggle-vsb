@@ -13,7 +13,7 @@ if __name__ == '__main__':
     sys.path.append("./")
 
     from lgbm_features_extractor import signal_origins, prep_features
-    from feature_extraction import flatiron
+    # from feature_extraction import flatiron
     from script.common.utils import timer, get_logger
 
     parser = ArgumentParser()
@@ -56,7 +56,8 @@ if __name__ == '__main__':
                 nthreads=-1).to_pandas().values
             origins = signal_origins(parq)
 
-            data = flatiron(parq)
+            # data = flatiron(parq)
+            data = parq
             X_temp = prep_features(data, origins)
             X.append(X_temp)
             current_head += step

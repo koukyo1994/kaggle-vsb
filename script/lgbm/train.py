@@ -1,6 +1,5 @@
 import sys
 import pickle
-import numpy as np
 import pandas as pd
 
 from pathlib import Path
@@ -34,6 +33,8 @@ if __name__ == '__main__':
 
     parser.add_argument("--metadata")
     parser.add_argument("--features")
+
+    parser.add_argument("--test_features")
 
     args = parser.parse_args()
 
@@ -73,3 +74,13 @@ if __name__ == '__main__':
     trainer.fit(train, answer, args.n_epochs)
     trainer_path = Path(f"trainer/{trainer.tag}")
     trainer_path.mkdir(parents=True, exist_ok=True)
+
+    with open(args.test_features, "rb") as f:
+        test = pickle.load(f)
+
+    pred = trainer.predict(test)
+    subdir = Path("submission")
+    subdir.mkdir(exist_ok=True)
+    sub = pd.read_csv("../input/sample_submission.csv")
+    sub["target"] = (pred > trainer.best_threshold).astype(int)
+    sub.to_csv(subdir / f"{trainer.tag}.csv", index=False)

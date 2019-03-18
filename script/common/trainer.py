@@ -264,5 +264,12 @@ class LGBMTrainer(Trainer):
         return valid_preds
 
     def _val(self, X_val, y_val, model):
-        valid_preds = model.predict_proba(X_val)[:, 0]
+        valid_preds = model.predict_proba(X_val)[:, 1]
         return valid_preds
+
+    def predict(self, X):
+        pred = np.zeros(X.shape[0])
+        for m in self.trees:
+            pred += m.predict_proba(X)[:, 1] / 5
+
+        return pred
