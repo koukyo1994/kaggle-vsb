@@ -188,6 +188,28 @@ def prep_data(path="../input/train.parquet",
     return X
 
 
+def lgbm_prep_data(path="../input/train.parquet",
+                   func=_transform_ts,
+                   offset=0,
+                   ncols=1452,
+                   n_dim=160):
+    praq_train = pq.read_pandas(
+        path,
+        columns=[str(i) for i in range(offset, offset + ncols)]).to_pandas()
+
+    X = []
+    for i in tqdm(range(offset, offset + ncols, 3)):
+        X_signal = []
+        for phase in [0, 1, 2]:
+            trns = func(praq_train[str(i + phase)], n_dim=n_dim)
+
+            X_signal.append(trns)
+        X_signal = np.concatenate(X_signal, axis=1)
+        X.append(X_signal)
+    X = np.asarray(X)
+    return X
+
+
 def square_data(path="../features/basic-features/160d/train_basic.pkl",
                 scalers=None):
     with open(path, "rb") as f:
